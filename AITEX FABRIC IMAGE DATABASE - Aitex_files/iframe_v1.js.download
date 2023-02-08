@@ -1,0 +1,1 @@
+window.addEventListener("message",function(e){if("height"===e.data.ipz_function)for(var t=document.getElementsByClassName("ipz-iframe"),i=0;i<t.length;i++){var n=t[i];n.contentWindow===e.source&&(n.height=e.data.ipz_height)}});
