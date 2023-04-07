@@ -1,0 +1,2 @@
+model_checkpoint_path: "inspection_model"
+all_model_checkpoint_paths: "inspection_model"
