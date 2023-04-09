@@ -6,6 +6,10 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+
+import tile_methods as tm
+import contour_find as cf
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QScrollArea, QVBoxLayout
 from PyQt5.QtGui import QIcon
@@ -13,17 +17,183 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel
 from PyQt5.QtGui import QIcon, QPixmap
 
+import matplotlib.pyplot as plt
+import numpy as np
+import PIL
+import tensorflow as tf
+
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
+
 import cv2
 import sys
 import os
 import time
-import numpy as np
 
-importFlag = False
-images = []
+names = []
+cvImages = []
+imageBatches = []
 defects = []
+imageI = 0
+defectI = 1
 
-path = "C:/Users/schof/LeedsUni/personalproject/allCropped"
+tileSize = 64
+overlap = 20
+
+model = None
+modelAug = None
+
+path = "C:/Users/schof/LeedsUni/personalproject/allCropped/"
+batchSize = 3
+batchIndex = 0
+
+def cv_to_qt(img):
+    rgbIm = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    h, w, channels = rgbIm.shape
+    dataPerRow = channels * w
+    qtImg = QtGui.QImage(rgbIm.data, w, h, dataPerRow, QtGui.QImage.Format_RGB888)
+    return QPixmap.fromImage(qtImg)
+
+def load_models():
+    global model
+    global modelAug
+
+    model = keras.models.load_model("inspection_model")
+    modelAug = keras.models.load_model("inspection_model_aug")
+
+def importImages():
+    global names 
+    global imageBatches
+    names = os.listdir(path)
+
+    nameNum = 0
+    batch = []
+    for name in names:
+        im = cv2.imread(path+name)
+        cvImages.append(im)
+        batch.append(im)
+        nameNum = nameNum + 1
+        if nameNum == batchSize:
+            imageBatches.append(batch)
+            nameNum = 0
+            batch = []
+
+
+
+def contourInspect():
+    threshold = ui.cMinSpinBox.value()
+    pixThresh = ui.pixMaxSpinBox.value()
+    lighBlur = ui.lightBlurSpinBox.value()
+    errosion = ui.erosionSpinBox.value()
+    blur = ui.blurSpinBox.value()
+
+    # for image in cvImages:
+
+    for image in imageBatches[batchIndex]:
+        imDefects = [image]
+        #start = time.perf_counter()
+        tiles = tm.tileImage(image,tileSize,tileSize,overlap)
+        #end = time.perf_counter() - start
+
+        for row in tiles:
+            for tile in row:
+                # start = time.perf_counter()
+                result, imageMean, blobMean,blob_area, exitCode = cf.twoPassInspection(tile.roi,threshold, pixThresh, lighBlur, errosion, blur)
+                # end = time.perf_counter() - start
+                if exitCode == 0:
+                    imDefects.append(result)
+        if len(imDefects) > 1:
+            defects.append(imDefects)
+        print(".", len(imageBatches[batchIndex]))
+
+
+def cnnInspect():
+    curModel = None
+    if ui.CNN_Model_Check.isChecked() == True:
+        curModel = model
+    if ui.CNN_Model_Aug_Check.isChecked() == True:
+        curModel = modelAug
+
+    for image in imageBatches[batchIndex]:
+        imDefects = [image]
+        tiles = tm.tileImage(image,tileSize,tileSize,overlap)
+
+        for row in tiles:
+            for tile in row:
+                # convert cv2 to tensor flow
+                start = time.perf_counter()
+                tileIm = tile.roi
+                tileImRGB = cv2.cvtColor(tileIm, cv2.COLOR_BGR2RGB)
+                tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
+                tensor = tf.expand_dims(tensor, 0)
+                end = time.perf_counter() - start
+
+                #predict
+                start = time.perf_counter()
+                predictions = curModel.predict(tensor)
+                tileClass = int(np.rint(predictions[0]))
+                end = time.perf_counter() - start
+
+                if tileClass == 0:
+                    imDefects.append(tile.roi)
+        if len(imDefects) > 1:
+            defects.append(imDefects)
+        print(".", len(imageBatches[batchIndex]))
+
+
+def nextDefect():
+    global defectI
+    global imageI
+
+    if (imageI < len(defects)) and (defectI  < len(defects[imageI])):
+
+        if len(defects) > 0:
+            image = defects[imageI][0]
+            pixmap = cv_to_qt(image)
+            ui.ImageBox.label.setPixmap(pixmap)
+
+            tileIm = defects[imageI][defectI]
+            pixmapTile = cv_to_qt(tileIm)
+            ui.defectLable.setPixmap(pixmapTile)
+
+            if len(defects[imageI])-1 == defectI:
+                defectI = 1
+                imageI = imageI + 1
+            else:
+                defectI = defectI + 1
+
+
+
+@pyqtSlot()
+def nextDefectSlot(self):
+    nextDefect()
+
+
+@pyqtSlot()
+def start(self):
+    global defects
+    global batchIndex
+    defects = []
+
+    if batchIndex >= len(imageBatches):
+        return
+    
+    if ui.Contour_Check.isChecked() == True:
+        start = time.perf_counter()
+        contourInspect()
+        end = time.perf_counter() - start
+        nextDefect()
+
+    if ui.CNN_Check.isChecked() == True:
+        start = time.perf_counter()
+        cnnInspect()
+        end = time.perf_counter() - start
+        nextDefect()
+
+    batchIndex = batchIndex + 1
+
+    
 
 @pyqtSlot()
 def selectCNN(self):
@@ -110,11 +280,19 @@ class Ui_MainWindow(object):
         self.line_7.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_7.setObjectName("line_7")
         self.LHS_Vertical.addWidget(self.line_7)
+
         self.Next = QtWidgets.QPushButton(self.centralwidget)
         self.Next.setObjectName("Next")
+        self.Next.clicked.connect(nextDefectSlot)
+
+
         self.LHS_Vertical.addWidget(self.Next)
+
         self.startButton = QtWidgets.QPushButton(self.centralwidget)
         self.startButton.setObjectName("startButton")
+        self.startButton.clicked.connect(start)
+
+
         self.LHS_Vertical.addWidget(self.startButton)
 
         self.stopButton = QtWidgets.QPushButton(self.centralwidget)
@@ -321,6 +499,8 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+    importImages()
+    load_models()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
