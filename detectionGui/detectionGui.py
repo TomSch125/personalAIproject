@@ -44,7 +44,7 @@ overlap = 20
 model = None
 modelAug = None
 
-path = "C:/Users/schof/LeedsUni/personalproject/allCropped/"
+path = "../allCropped/"
 batchSize = 3
 batchIndex = 0
 
@@ -59,8 +59,8 @@ def load_models():
     global model
     global modelAug
 
-    model = keras.models.load_model("inspection_model")
-    modelAug = keras.models.load_model("inspection_model_aug")
+    model = keras.models.load_model("../inspection_model")
+    modelAug = keras.models.load_model("../inspection_model_aug")
 
 def importImages():
     global names 
@@ -78,6 +78,10 @@ def importImages():
             imageBatches.append(batch)
             nameNum = 0
             batch = []
+
+    
+    
+
 
 
 
@@ -108,6 +112,39 @@ def contourInspect():
         print(".", len(imageBatches[batchIndex]))
 
 
+# def cnnInspect():
+#     curModel = None
+#     if ui.CNN_Model_Check.isChecked() == True:
+#         curModel = model
+#     if ui.CNN_Model_Aug_Check.isChecked() == True:
+#         curModel = modelAug
+
+#     for image in imageBatches[batchIndex]:
+#         imDefects = [image]
+#         tiles = tm.tileImage(image,tileSize,tileSize,overlap)
+
+#         for row in tiles:
+#             for tile in row:
+#                 # convert cv2 to tensor flow
+#                 start = time.perf_counter()
+#                 tileIm = tile.roi
+#                 tileImRGB = cv2.cvtColor(tileIm, cv2.COLOR_BGR2RGB)
+#                 tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
+#                 tensor = tf.expand_dims(tensor, 0)
+#                 end = time.perf_counter() - start
+
+#                 #predict
+#                 start = time.perf_counter()
+#                 predictions = curModel.predict(tensor)
+#                 tileClass = int(np.rint(predictions[0]))
+#                 end = time.perf_counter() - start
+
+#                 if tileClass == 0:
+#                     imDefects.append(tile.roi)
+#         if len(imDefects) > 1:
+#             defects.append(imDefects)
+#         print(".", len(imageBatches[batchIndex]))
+
 def cnnInspect():
     curModel = None
     if ui.CNN_Model_Check.isChecked() == True:
@@ -115,9 +152,13 @@ def cnnInspect():
     if ui.CNN_Model_Aug_Check.isChecked() == True:
         curModel = modelAug
 
+
     for image in imageBatches[batchIndex]:
         imDefects = [image]
         tiles = tm.tileImage(image,tileSize,tileSize,overlap)
+
+        #mainTensor = None
+        imarray = []
 
         for row in tiles:
             for tile in row:
@@ -125,21 +166,33 @@ def cnnInspect():
                 start = time.perf_counter()
                 tileIm = tile.roi
                 tileImRGB = cv2.cvtColor(tileIm, cv2.COLOR_BGR2RGB)
-                tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
-                tensor = tf.expand_dims(tensor, 0)
-                end = time.perf_counter() - start
 
-                #predict
-                start = time.perf_counter()
-                predictions = curModel.predict(tensor)
-                tileClass = int(np.rint(predictions[0]))
-                end = time.perf_counter() - start
+                imarray.append(tileImRGB)
+                # tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
+                # tensor = tf.expand_dims(tensor, 0)
 
-                if tileClass == 0:
-                    imDefects.append(tile.roi)
+                # if mainTensor == None:
+                #     mainTensor = tensor
+                # else:
+                #     tf.concat([mainTensor, tensor], 1)
+
+        arg = tf.convert_to_tensor(imarray, dtype=tf.float32)
+        # predictions = curModel.predict(mainTensor)
+        predictions = curModel.predict(arg)
+        indices = np.where(predictions < 0.02)
+
+        for i in indices[0]:
+            rowNum = int(i/len(tiles[0]))
+            rowIndent = i%len(tiles[0])
+            imDefects.append(tiles[rowNum][rowIndent].roi)
+
         if len(imDefects) > 1:
             defects.append(imDefects)
-        print(".", len(imageBatches[batchIndex]))
+
+
+
+
+
 
 
 def nextDefect():
@@ -174,7 +227,13 @@ def nextDefectSlot(self):
 def start(self):
     global defects
     global batchIndex
+    global imageI
+    imageI = 0
     defects = []
+    ui.defectLable.clear()
+    ui.ImageBox.label.clear()
+
+
 
     if batchIndex >= len(imageBatches):
         return
