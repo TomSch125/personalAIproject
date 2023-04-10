@@ -75,7 +75,8 @@ def twoPassInspection(img, threshHold, pixThresh, lightBlur, errode, blur):
     result_I, imageMean_I, blobMean_I,blob_area_I, exitCode_I= findDefect(img,threshHold,pixThresh, lightBlur, errode, blur)
     
     if(blob_area_I > blob_area):
-        return result_I, imageMean_I, blobMean_I,blob_area_I, exitCode_I
+        result_I_swap = cv2.bitwise_not(result_I)
+        return result_I_swap, imageMean_I, blobMean_I,blob_area_I, exitCode_I
     
     return result, imageMean, blobMean,blob_area, exitCode
 

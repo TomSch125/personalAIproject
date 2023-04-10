@@ -109,7 +109,7 @@ def contourInspect():
                     imDefects.append(result)
         if len(imDefects) > 1:
             defects.append(imDefects)
-        print(".", len(imageBatches[batchIndex]))
+        #print(".", len(imageBatches[batchIndex]))
 
 
 # def cnnInspect():
@@ -179,7 +179,7 @@ def cnnInspect():
         arg = tf.convert_to_tensor(imarray, dtype=tf.float32)
         # predictions = curModel.predict(mainTensor)
         predictions = curModel.predict(arg)
-        indices = np.where(predictions < 0.02)
+        indices = np.where(predictions < ui.confidenceSpin.value())
 
         for i in indices[0]:
             rowNum = int(i/len(tiles[0]))
@@ -249,6 +249,8 @@ def start(self):
         cnnInspect()
         end = time.perf_counter() - start
         nextDefect()
+
+    ui.timeLabel.setText("3 Image Took: {:.2f}s".format(end))
 
     batchIndex = batchIndex + 1
 
@@ -353,6 +355,11 @@ class Ui_MainWindow(object):
 
 
         self.LHS_Vertical.addWidget(self.startButton)
+
+        self.timeLabel = QtWidgets.QLabel(self.centralwidget)
+        self.timeLabel.setObjectName("timeLabel")
+        self.timeLabel.setMaximumHeight(30)
+        self.LHS_Vertical.addWidget(self.timeLabel)
 
         self.stopButton = QtWidgets.QPushButton(self.centralwidget)
         self.stopButton.setObjectName("stopButton")
@@ -515,9 +522,24 @@ class Ui_MainWindow(object):
         self.CNN_Model_Aug_Check = QtWidgets.QCheckBox(self.centralwidget)
         self.CNN_Model_Aug_Check.setObjectName("CNN_Model_Aug_Check")
         self.CNN_Model_Aug_Check.stateChanged.connect(lambda:selectModelBinAug(self.CNN_Model_Aug_Check))
-
-
         self.verticalLayout_4.addWidget(self.CNN_Model_Aug_Check)
+
+        self.horizontalLayout_Con = QtWidgets.QHBoxLayout()
+
+        self.conLabel = QtWidgets.QLabel(self.centralwidget)
+        self.conLabel.setObjectName("conLabel")
+        self.horizontalLayout_Con.addWidget(self.conLabel)
+
+        self.confidenceSpin = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.confidenceSpin.setMinimum(0.01)
+        self.confidenceSpin.setMaximum(0.5)
+        self.confidenceSpin.setSingleStep(0.01)
+        self.confidenceSpin.setProperty("value", 0.02)
+        self.confidenceSpin.setObjectName("confidenceSpin")
+        self.horizontalLayout_Con.addWidget(self.confidenceSpin)
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout_Con)
+
         self.LHS_BottomHalf.addLayout(self.verticalLayout_4)
         self.RHS_Vertical.addLayout(self.LHS_BottomHalf)
         self.RHS_Vertical.setStretch(0, 1)
@@ -554,6 +576,8 @@ class Ui_MainWindow(object):
         self.modelLable.setText(_translate("MainWindow", "Model:"))
         self.CNN_Model_Check.setText(_translate("MainWindow", "Binary CNN"))
         self.CNN_Model_Aug_Check.setText(_translate("MainWindow", "Binary CNN + Data Augmentation"))
+        self.conLabel.setText(_translate("MainWindow", "Confidence Threshold:"))
+        self.timeLabel.setText(_translate("MainWindow", ""))
 
 
 if __name__ == "__main__":
