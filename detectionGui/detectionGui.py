@@ -26,6 +26,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 
+
 import cv2
 import sys
 import os
@@ -45,7 +46,7 @@ model = None
 modelAug = None
 
 path = "../allCropped/"
-batchSize = 3
+batchSize = 1
 batchIndex = 0
 
 def cv_to_qt(img):
@@ -79,11 +80,6 @@ def importImages():
             nameNum = 0
             batch = []
 
-    
-    
-
-
-
 
 def contourInspect():
     threshold = ui.cMinSpinBox.value()
@@ -112,39 +108,6 @@ def contourInspect():
         #print(".", len(imageBatches[batchIndex]))
 
 
-# def cnnInspect():
-#     curModel = None
-#     if ui.CNN_Model_Check.isChecked() == True:
-#         curModel = model
-#     if ui.CNN_Model_Aug_Check.isChecked() == True:
-#         curModel = modelAug
-
-#     for image in imageBatches[batchIndex]:
-#         imDefects = [image]
-#         tiles = tm.tileImage(image,tileSize,tileSize,overlap)
-
-#         for row in tiles:
-#             for tile in row:
-#                 # convert cv2 to tensor flow
-#                 start = time.perf_counter()
-#                 tileIm = tile.roi
-#                 tileImRGB = cv2.cvtColor(tileIm, cv2.COLOR_BGR2RGB)
-#                 tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
-#                 tensor = tf.expand_dims(tensor, 0)
-#                 end = time.perf_counter() - start
-
-#                 #predict
-#                 start = time.perf_counter()
-#                 predictions = curModel.predict(tensor)
-#                 tileClass = int(np.rint(predictions[0]))
-#                 end = time.perf_counter() - start
-
-#                 if tileClass == 0:
-#                     imDefects.append(tile.roi)
-#         if len(imDefects) > 1:
-#             defects.append(imDefects)
-#         print(".", len(imageBatches[batchIndex]))
-
 def cnnInspect():
     curModel = None
     if ui.CNN_Model_Check.isChecked() == True:
@@ -168,14 +131,7 @@ def cnnInspect():
                 tileImRGB = cv2.cvtColor(tileIm, cv2.COLOR_BGR2RGB)
 
                 imarray.append(tileImRGB)
-                # tensor = tf.convert_to_tensor(tileImRGB, dtype=tf.float32)
-                # tensor = tf.expand_dims(tensor, 0)
-
-                # if mainTensor == None:
-                #     mainTensor = tensor
-                # else:
-                #     tf.concat([mainTensor, tensor], 1)
-
+ 
         arg = tf.convert_to_tensor(imarray, dtype=tf.float32)
         # predictions = curModel.predict(mainTensor)
         predictions = curModel.predict(arg)
@@ -188,11 +144,6 @@ def cnnInspect():
 
         if len(imDefects) > 1:
             defects.append(imDefects)
-
-
-
-
-
 
 
 def nextDefect():
@@ -250,7 +201,7 @@ def start(self):
         end = time.perf_counter() - start
         nextDefect()
 
-    ui.timeLabel.setText("3 Image Took: {:.2f}s".format(end))
+    ui.timeLabel.setText("{} Image Took: {:.2f}s".format(batchSize,end))
 
     batchIndex = batchIndex + 1
 
@@ -280,6 +231,13 @@ def selectModelBin(self):
 def selectModelBinAug(self):
     if self.isChecked() == True:
         ui.CNN_Model_Check.setChecked(False)
+
+@pyqtSlot()
+def importButtonPress(self, mainwidow):
+    global path
+    folderpath = QtWidgets.QFileDialog.getExistingDirectory(None, "Select one or more files to open", "C:/")
+    path = folderpath + "/"
+    importImages()
 
 class ScrollLabel(QScrollArea):
  
@@ -311,7 +269,9 @@ class Ui_MainWindow(object):
         self.LHS_Vertical.setObjectName("LHS_Vertical")
         self.importButton = QtWidgets.QPushButton(self.centralwidget)
         self.importButton.setObjectName("importButton")
-        self.importButton.hide()
+        self.importButton.clicked.connect(lambda:importButtonPress(self.Contour_Check, self))
+
+        # self.importButton.hide()
 
         self.LHS_Vertical.addWidget(self.importButton)
         self.line_6 = QtWidgets.QFrame(self.centralwidget)
@@ -375,14 +335,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.line_5)
         self.RHS_Vertical = QtWidgets.QVBoxLayout()
         self.RHS_Vertical.setObjectName("RHS_Vertical")
-
-
-        # self.ImageBox = QtWidgets.QLabel(self.centralwidget)
-        # self.ImageBox.setMinimumSize(QtCore.QSize(800, 400))
-        # self.ImageBox.setAutoFillBackground(False)
-        # self.ImageBox.setText("")
-        # self.ImageBox.setScaledContents(True)
-        # self.ImageBox.setObjectName("ImageBox")
 
         self.ImageBox = ScrollLabel(self.centralwidget)
         self.ImageBox.setObjectName("ImageBox")
@@ -582,7 +534,9 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
-    importImages()
+    print("Loading Images")
+    #importImages()
+    print("Loading Deep Learning Models")
     load_models()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
