@@ -535,7 +535,7 @@ class Ui_MainWindow(object):
 if __name__ == "__main__":
     import sys
     print("Loading Images")
-    #importImages()
+    importImages()
     print("Loading Deep Learning Models")
     load_models()
     app = QtWidgets.QApplication(sys.argv)
