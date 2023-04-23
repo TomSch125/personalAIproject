@@ -13,14 +13,14 @@ class Tile:
     imagex = 0
     imagey = 0
     roi = 0
+    overlap = 0
 
     def __init__(self,x, y, overlap, width, height, imagex, imagey):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-#         self.imagex = x * (width - overlap)
-#         self.imagey = y * (height - overlap)
+        self.overlap = overlap
         self.imagex = imagex
         self.imagey = imagey
 
@@ -29,17 +29,14 @@ class Tile:
         x = self.imagex
         height = self.height
         width = self.width
-        #print(y,x)
         self.roi = master[y:y+height, x:x+width]
         if (self.roi.shape[1] < width):
-            #print("error", self.roi.shape, x)
             new_x = x - (width-self.roi.shape[1])
             self.roi = master[y:y+height, new_x:new_x+width]
             self.imagex = new_x
 
 
         if (self.roi.shape[0] <height):
-            #print("error", self.roi.shape)
             new_y = y - (height-self.roi.shape[0])
             self.roi = master[new_y:new_y+height, x:x+width]
             self.imagey = new_y
@@ -62,7 +59,6 @@ def tileImage(image,width, height, overlap):
     tilesInY = math.ceil(height / (t_height - overlap))
     
     tiles = []
-
     
     for y in range(tilesInY):
         row = []
@@ -76,9 +72,6 @@ def tileImage(image,width, height, overlap):
             if(x == tilesInX-1):
                 tempx = width - t_width
 
-                
-
-            
             tile = Tile(x,y,overlap,t_width,t_height, tempx, tempy)
             tile.populate(image)
             row.append(tile)
