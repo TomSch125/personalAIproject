@@ -3,25 +3,20 @@ import numpy as np
 
 def findDefect(img, threshHold, pixThresh, lightBlur, errode, blur):
     exitCode = 0 # an exit code of 0 means a blob has been detected
-    
     greyMaster = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # grey blob defect
 
-    # Light blur to lighten up and reduce size of small shadows
-    lightBlur = cv2.blur(greyMaster, (lightBlur,lightBlur)) # used instead of gauusian blur for time efficirncy
-#     adjusted = setLims(lightBlur, 0 ,110) #Needed but massively increases time to run
+    # Light blur to reduce size of small shadows and highlights
+    lightBlur = cv2.blur(greyMaster, (lightBlur,lightBlur)) 
+    # adjusted = setLims(lightBlur, 0 ,110) # massively increases time to run
     ret, adjusted = cv2.threshold(lightBlur,pixThresh,pixThresh,cv2.THRESH_TRUNC)
-
-
 
     kernel = np.ones((errode,errode),np.uint8) # forms the matrix used when eroading
     erosion = cv2.erode(adjusted,kernel,iterations = 1)
     
     # large blur to hide background weave and increase the size of defects
     greyBlur = cv2.blur(erosion, (blur,blur))
-
     # do adaptive threshold on gray image
     thresh = cv2.adaptiveThreshold(greyBlur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 101, 3)
-
 
     # apply morphology open then close
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
