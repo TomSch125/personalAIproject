@@ -1,0 +1,25 @@
+<mxfile host="Electron" modified="2023-05-05T13:04:17.039Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.1.2 Chrome/106.0.5249.199 Electron/21.4.3 Safari/537.36" etag="7Z0r2NB1R5ZbAe9iHAvV" version="21.1.2" type="device">
+  <diagram name="Page-1" id="zgownJbY17lxazxjH0V5">
+    <mxGraphModel dx="1276" dy="606" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="kFkXoNhpWKTrUYypLY12-1" value="normalCorrect + defectCorrect" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="420" y="170" width="210" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="kFkXoNhpWKTrUYypLY12-2" value="" style="endArrow=none;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="370" y="210" as="sourcePoint" />
+            <mxPoint x="700" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="kFkXoNhpWKTrUYypLY12-3" value="normalCorrect + defectCorrect +&amp;nbsp;normalIncorrect +&amp;nbsp;defectIncorrect" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="310" y="220" width="430" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="kFkXoNhpWKTrUYypLY12-4" value="x 100" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="710" y="190" width="60" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

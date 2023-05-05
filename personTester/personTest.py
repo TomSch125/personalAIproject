@@ -23,8 +23,8 @@ import numpy as np
 
 
 
-pathDefectIms = "C:/Users/schof/LeedsUni/personalproject/personTester/images/defects/"
-pathNormalIms = "C:/Users/schof/LeedsUni/personalproject/personTester/images/normal/"
+pathDefectIms = "./images/defects/"
+pathNormalIms = "./images/normal/"
 names = []
 normalNames = []
 defectNames = []
