@@ -103,7 +103,7 @@ def contourInspect():
                 # end = time.perf_counter() - start
                 if exitCode == 0:
                     imDefects.append(result)
-        if len(imDefects) > 1:
+        if len(imDefects) >= 1:
             defects.append(imDefects)
         #print(".", len(imageBatches[batchIndex]))
 
@@ -142,7 +142,7 @@ def cnnInspect():
             rowIndent = i%len(tiles[0])
             imDefects.append(tiles[rowNum][rowIndent].roi)
 
-        if len(imDefects) > 1:
+        if len(imDefects) >= 1:
             defects.append(imDefects)
 
 
